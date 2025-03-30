@@ -1,0 +1,201 @@
+@startuml
+
+' Enums
+enum UserRole {
+  ADMINISTRATOR
+  EXPERT
+  CLIENT
+}
+
+enum AuctionType {
+  ORIENTAL
+  MODERN_ART
+  MANUSCRIPTS
+  PAINTINGS
+  CALLIGRAPHY
+  CERAMICS
+  METALWORKS
+}
+
+enum ServiceType {
+  CONSULTATION
+  VIEWING_ACCOMPANIMENT
+  AUCTION_REPRESENTATION
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+' Base User class
+class User {
+  -id: UUID
+  -email: String
+  -password: String {hashed}
+  -role: UserRole
+  -createdAt: DateTime
+  -lastLogin: DateTime
+  -isActive: Boolean
+}
+
+' Administrator specific
+class Administrator {
+  -isMainAdmin: Boolean
+}
+
+' Expert specific
+class Expert {
+  -licenseNumber: String
+  -contactAddress: String
+  -expertiseAreas: List<String>
+  -affiliationDate: Date
+  -rating: Float
+}
+
+' Client specific
+class Client {
+  -affiliation: String
+  -contactInfo: String
+  -intent: String
+  -isApproved: Boolean
+  -registrationDate: Date
+  -approvalDate: Date
+}
+
+' Institution and related
+class Institution {
+  -name: String
+  -address: String
+  -contactInfo: String
+  -establishedDate: Date
+}
+
+class ObjectOfInterest {
+  -id: UUID
+  -name: String
+  -type: String
+  -description: Text
+  -ownedByInstitution: Boolean
+  -acquisitionDate: Date
+  -estimatedValue: Decimal
+  -currentLocation: String
+  -condition: String
+  -lastUpdated: DateTime
+}
+
+' Auction related
+class AuctionHouse {
+  -id: UUID
+  -name: String
+  -establishedDate: Date
+  -rating: Float
+  -specialties: List<AuctionType>
+}
+
+class City {
+  -id: UUID
+  -name: String
+  -country: String
+  -timeZone: String
+  -coordinates: Point
+}
+
+class Auction {
+  -id: UUID
+  -title: String
+  -type: AuctionType
+  -date: Date
+  -isOnline: Boolean
+  -status: String
+  -minimumBid: Decimal
+  -cataloguePrice: Decimal
+}
+
+' Schedule management
+class Schedule {
+  -id: UUID
+  -name: String
+  -description: String
+  -createdAt: DateTime
+  -lastModified: DateTime
+}
+
+class TimeSlot {
+  -id: UUID
+  -startTime: DateTime
+  -endTime: DateTime
+  -timeZone: String
+  -isBooked: Boolean
+}
+
+' Viewing and participation
+class Viewing {
+  -id: UUID
+  -date: Date
+  -maxParticipants: Integer
+  -currentParticipants: Integer
+  -cataloguesAvailable: Integer
+  -cataloguesSold: Integer
+}
+
+class ViewingParticipant {
+  -id: UUID
+  -registrationTime: DateTime
+  -role: String
+  -status: String
+  -notes: Text
+}
+
+' Service management
+class ServiceRequest {
+  -id: UUID
+  -type: ServiceType
+  -requestDate: DateTime
+  -status: RequestStatus
+  -description: Text
+  -priority: Integer
+}
+
+class ExpertAvailability {
+  -id: UUID
+  -startTime: DateTime
+  -endTime: DateTime
+  -status: String
+  -notes: Text
+}
+
+' Relationships
+User <|-- Administrator
+User <|-- Expert
+User <|-- Client
+
+Institution "1" -- "*" ObjectOfInterest : owns
+Institution "1" -- "*" Expert : employs
+Institution "1" -- "*" AuctionHouse : partners
+
+AuctionHouse "*" -- "1" City : locatedIn
+AuctionHouse "1" -- "*" Auction : organizes
+
+Auction "1" -- "0..1" Viewing : includes
+Auction "*" -- "*" ObjectOfInterest : features
+Auction "1" -- "1" Schedule : follows
+
+Schedule "1" -- "*" TimeSlot : contains
+Viewing "1" -- "1" Schedule : scheduledFor
+
+ViewingParticipant "*" -- "1" Viewing : attendsViewing
+ViewingParticipant "*" -- "1" Expert : expertParticipant
+ViewingParticipant "*" -- "1" Client : clientParticipant
+
+ServiceRequest "*" -- "1" Client : requestedBy
+ServiceRequest "*" -- "1" Expert : assignedTo
+ServiceRequest "*" -- "0..1" Viewing : relatedTo
+ServiceRequest "*" -- "0..1" Auction : relatedTo
+
+ExpertAvailability "*" -- "1" Expert : availabilityFor
+ExpertAvailability "1" -- "1" Schedule : timeSlot
+
+@enduml 
